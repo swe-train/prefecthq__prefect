@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import time
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
@@ -89,7 +90,12 @@ class FlowRunEngine(Generic[P, R]):
         return state
 
     async def result(self, raise_on_failure: bool = True) -> R | State | None:
-        return await self.state.result(raise_on_failure=raise_on_failure)
+        _result = self.state.result(raise_on_failure=raise_on_failure)
+        # state.result is a `sync_compatible` function that may or may not return an awaitable
+        # depending on the parent frame
+        if inspect.isawaitable(_result):
+            _result = await _result
+        return _result
 
     async def handle_success(self, result: R) -> R:
         await self.set_state(Completed())
