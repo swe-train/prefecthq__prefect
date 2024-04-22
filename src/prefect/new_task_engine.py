@@ -389,6 +389,7 @@ class TaskRunEngine(Generic[P, R]):
             yield self
         except Exception as exc:
             run_sync(client.__aexit__(type(exc), exc, None))
+            raise
         else:
             run_sync(client.__aexit__(None, None, None))
         finally:
@@ -426,8 +427,8 @@ async def run_task(
     """
 
     engine = TaskRunEngine[P, R](task=task, parameters=parameters, task_run=task_run)
+    # This is a context manager that keeps track of the run of the task run.
     async with engine.start() as run:
-        # This is a context manager that keeps track of the run of the task run.
         await run.begin_run()
 
         while run.is_running():
@@ -458,8 +459,8 @@ def run_task_sync(
     return_type: Literal["state", "result"] = "result",
 ) -> R | State | None:
     engine = TaskRunEngine[P, R](task=task, parameters=parameters, task_run=task_run)
+    # This is a context manager that keeps track of the run of the task run.
     with engine.start_sync() as run:
-        # This is a context manager that keeps track of the run of the task run.
         run_sync(run.begin_run())
 
         while run.is_running():
