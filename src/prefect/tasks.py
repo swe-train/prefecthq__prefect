@@ -326,6 +326,13 @@ class Task(Generic[P, R]):
         self.result_serializer = result_serializer
         self.result_storage_key = result_storage_key
         self.cache_result_in_memory = cache_result_in_memory
+
+        if (
+            timeout_seconds is not None
+            and not self.isasync
+            and int(timeout_seconds) != timeout_seconds
+        ):
+            raise ValueError("Timeout must be an integer for synchronous tasks")
         self.timeout_seconds = float(timeout_seconds) if timeout_seconds else None
         # Warn if this task's `name` conflicts with another task while having a
         # different function. This is to detect the case where two or more tasks
@@ -589,7 +596,10 @@ class Task(Generic[P, R]):
             from prefect.utilities.asyncutils import run_sync
 
             awaitable = run_task(
-                task=self, parameters=parameters, wait_for=wait_for, return_type=return_type
+                task=self,
+                parameters=parameters,
+                wait_for=wait_for,
+                return_type=return_type,
             )
             if self.isasync:
                 return awaitable

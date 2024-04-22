@@ -9,6 +9,7 @@ import threading
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
+from contextvars import copy_context
 from functools import partial, wraps
 from threading import Thread
 from typing import (
@@ -107,7 +108,8 @@ def run_sync(coroutine: Coroutine[Any, Any, T]) -> T:
         loop = asyncio.get_running_loop()
         if loop.is_running():
             with ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, coroutine)
+                current_context = copy_context()
+                future = executor.submit(current_context.run, asyncio.run, coroutine)
                 return future.result()
         else:
             return asyncio.run(coroutine)
