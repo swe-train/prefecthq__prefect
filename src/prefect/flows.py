@@ -10,7 +10,7 @@ import inspect
 import os
 import tempfile
 import warnings
-from functools import partial, update_wrapper
+from functools import partial, update_wrapper, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
@@ -1513,7 +1513,7 @@ def flow(
         >>>     pass
     """
     if __fn:
-        return cast(
+        flow_obj = cast(
             Flow[P, R],
             Flow(
                 fn=__fn,
@@ -1538,6 +1538,13 @@ def flow(
                 on_running=on_running,
             ),
         )
+
+        @wraps(__fn)
+        def wrapper(*args, **kwargs):
+            return flow_obj(*args, **kwargs)
+
+        wrapper.flow = flow_obj
+        return wrapper
     else:
         return cast(
             Callable[[Callable[P, R]], Flow[P, R]],

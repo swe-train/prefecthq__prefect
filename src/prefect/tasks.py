@@ -9,7 +9,7 @@ import inspect
 import os
 import warnings
 from copy import copy
-from functools import partial, update_wrapper
+from functools import partial, update_wrapper, wraps
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1271,7 +1271,7 @@ def task(
     """
 
     if __fn:
-        return cast(
+        task_obj = cast(
             Task[P, R],
             Task(
                 fn=__fn,
@@ -1299,6 +1299,13 @@ def task(
                 viz_return_value=viz_return_value,
             ),
         )
+
+        @wraps(__fn)
+        def wrapper(*args, **kwargs):
+            return task_obj(*args, **kwargs)
+
+        wrapper.task = task_obj
+        return wrapper
     else:
         return cast(
             Callable[[Callable[P, R]], Task[P, R]],
