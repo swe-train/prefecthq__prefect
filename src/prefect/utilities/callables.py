@@ -27,6 +27,7 @@ from prefect.exceptions import (
     SignatureMismatchError,
 )
 from prefect.logging.loggers import disable_logger, get_logger
+from prefect.utilities.importtools import safe_load_namespace
 
 logger = get_logger(__name__)
 
